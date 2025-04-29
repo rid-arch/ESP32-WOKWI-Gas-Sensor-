@@ -1,0 +1,67 @@
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 20, 4); // karena pakai LCD 20x4
+
+#define MQ_SENSOR_PIN 32
+#define BUZZER_PIN 14
+
+#define AMAN_THRESHOLD 30.0
+#define SEDANG_THRESHOLD 60.0
+
+void setup() {
+  Serial.begin(115200);
+  lcd.init();
+  lcd.backlight();
+
+  
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  lcd.setCursor(0, 0);
+  lcd.print("Deteksi Gas CH4");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  int analogValue = analogRead(MQ_SENSOR_PIN);
+  float levelGas = (analogValue / 4095.0) * 100.0; // Ubah ke persen
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Kadar CH4: ");
+  lcd.print(levelGas, 1);
+  lcd.print("%");
+
+  if (levelGas < AMAN_THRESHOLD) {
+    // Level Aman
+    lcd.setCursor(0, 2);
+    lcd.print("Status: AMAN :)");
+    digitalWrite(BUZZER_PIN, LOW); // Buzzer mati
+    delay(1000); // Tunda sebelum baca ulang
+
+  } else if (levelGas < SEDANG_THRESHOLD) {
+    // Level Sedang
+    lcd.setCursor(0, 2);
+    lcd.print("Status: WASPADA");
+    // buzzer bunyi pelan
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(500);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(500);
+
+  } else {
+    // Level Bahaya
+    lcd.setCursor(0, 2);
+    lcd.print("Status: BAHAYA!");
+    // buzzer bunyi cepat
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(200);
+  }
+
+  lcd.setCursor(0, 3); // Baris ke-4
+  lcd.print("Pantau terus level!");
+
+  delay(200);
+}
